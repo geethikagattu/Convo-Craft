@@ -754,4 +754,17 @@
   } else {
     init();
   }
+  const token = localStorage.getItem('token');
+
+if (!token) {
+  // Not logged in, redirect to login
+  window.location.href = 'login.html';
+}
+
+// Add logout function
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userName');
+  window.location.href = 'login.html';
+}
 })();

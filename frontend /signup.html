@@ -1,0 +1,55 @@
+<script>
+document.getElementById("signup-form").addEventListener("submit", async function(e){
+  e.preventDefault();
+  
+  // Get form values
+  const name = e.target[0].value;
+  const email = e.target[1].value;
+  const password = e.target[2].value;
+
+  console.log('🔵 Attempting signup:', { name, email });
+
+  try {
+    // Send signup request
+    const response = await fetch('http://localhost:5001/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await response.json();
+    console.log('🔵 Response:', data);
+
+    if (response.ok) {
+      alert('Account created successfully! ✅');
+      
+      // Auto-login after signup
+      const loginResponse = await fetch('http://localhost:5001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (loginResponse.ok) {
+        // Save token
+        localStorage.setItem('token', loginData.token);
+        localStorage.setItem('userName', name);
+        
+        // Redirect to app
+        window.location.href = "app.html";
+      }
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (error) {
+    console.error('🔴 Error:', error);
+    alert('Network error. Make sure server is running!');
+  }
+});
+</script>

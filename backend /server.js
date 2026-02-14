@@ -43,18 +43,27 @@ app.get("/", (req, res) => {
 /* =========================
    Signup
 ========================= */
+/* =========================
+   Signup
+========================= */
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    console.log('📥 Signup request:', { name, email });
 
     if (!name || !email || !password)
       return res.status(400).json({ error: "All fields required" });
 
     await db.read();
+    console.log('📖 Read DB, current users:', db.data.users.length);
+
     const existingUser = db.data.users.find(u => u.email === email);
     
-    if (existingUser)
+    if (existingUser) {
+      console.log('❌ User already exists');
       return res.status(400).json({ error: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -66,17 +75,27 @@ app.post("/signup", async (req, res) => {
       history: []
     };
 
+    console.log('👤 Creating user:', user.id);
+
     db.data.users.push(user);
+    
+    console.log('💾 Before write, users count:', db.data.users.length);
+    
     await db.write();
+    
+    console.log('✅ After write, checking file...');
+    
+    // Verify it was written
+    await db.read();
+    console.log('📊 Verified users in DB:', db.data.users.length);
 
     res.json({ message: "User created successfully" });
 
   } catch (err) {
-    console.error("Signup Error:", err);
+    console.error("❌ Signup Error:", err);
     res.status(500).json({ error: "Signup failed" });
   }
 });
-
 /* =========================
    Login
 ========================= */
