@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,9 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style2.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="app-page">
   <!-- Apply saved theme immediately to reduce flash (class on body) -->
   <script>
     (function () {
@@ -18,10 +19,15 @@
       }
     })();
   </script>
+  <!-- Same hero background as login -->
+  <section class="login-hero-bg">
+    <div class="login-bg-img"></div>
+    <div class="login-bg-overlay"></div>
+  </section>
   <!-- Sticky Navbar -->
-  <header class="navbar" id="navbar">
+  <header class="navbar login-style-navbar" id="navbar">
     <div class="navbar-inner">
-      <a href="#" class="logo">
+      <a href="index.html" class="logo">
         <span class="logo-text">ConvoCraft</span>
         <span class="logo-tagline">Speak Better. Connect Deeper.</span>
       </a>

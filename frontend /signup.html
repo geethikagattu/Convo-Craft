@@ -1,3 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account – ConvoCraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style2.css">
+</head>
+<body>
+
+<!-- Same hero background as login -->
+<section class="login-hero-bg">
+  <div class="login-bg-img"></div>
+  <div class="login-bg-overlay"></div>
+</section>
+
+<header class="login-navbar">
+  <div class="login-navbar-inner">
+    <a href="index.html" class="login-btn login-btn-primary">ConvoCraft</a>
+    <a href="index.html" class="login-btn login-btn-secondary">Back</a>
+  </div>
+</header>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <h2>Create Your Account ✨</h2>
+
+    <form id="signup-form">
+      <input type="text" placeholder="Full Name" required>
+      <input type="email" placeholder="Email" required>
+      <input type="password" placeholder="Password" required>
+
+      <button type="submit">Create Account</button>
+    </form>
+
+    <p class="auth-footer">Already have an account? <a href="login.html">Login</a></p>
+  </div>
+</div>
+
+
 <script>
 document.getElementById("signup-form").addEventListener("submit", async function(e){
   e.preventDefault();
@@ -53,3 +96,7 @@ document.getElementById("signup-form").addEventListener("submit", async function
   }
 });
 </script>
+
+
+</body>
+</html>

@@ -8,8 +8,12 @@
   // ----- Hero background slideshow -----
   var HERO_IMAGES = [
     "-4.jpg.jpeg",
-    "Untitled design-5.png",
-    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1920&q=80"
+    "https://media.istockphoto.com/id/1072088296/photo/group-of-young-friends-play-video-games-together-at-home.jpg?s=612x612&w=0&k=20&c=wSeekEvf_0MbKZ_d7NJww_fTKJWz0IuxMiymGVnVF6s=",
+    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1920&q=80",
+    "https://plus.unsplash.com/premium_photo-1661609291595-3a849ea67002?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80",
+        "Untitled design-5.png",
+    "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?w=1920&q=80"
   ];
   var SLIDESHOW_INTERVAL_MS = 4000;
   var currentSlideIndex = 0;

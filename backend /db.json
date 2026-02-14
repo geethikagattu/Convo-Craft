@@ -6,6 +6,27 @@
       "email": "test@test.com",
       "password": "$2b$10$dDmgfg18S5meetKHWZEqx.CGQ2CMIrDDwoOwKQHUFc0S9HxFzRmxW",
       "history": []
+    },
+    {
+      "id": "1771075176547",
+      "name": "Geethika ",
+      "email": "geethikagt30@gmail.com",
+      "password": "$2b$10$QWohdPT.jT2iJTZnWuCwE.JEpUOp7WDMCdPY9B.mMSJnoiwVhwCXy",
+      "history": []
+    },
+    {
+      "id": "1771075530961",
+      "name": "Geethika",
+      "email": "geethika@gmail.com",
+      "password": "$2b$10$/uzvPZIMYqL9mKN65JGYn..3vBDTPp4Eiwuwn3ioDv99WeaBVWNBy",
+      "history": []
+    },
+    {
+      "id": "1771075660812",
+      "name": "Saniya",
+      "email": "saniyahaseen@gmail.com",
+      "password": "$2b$10$K1NS2ymjSCE.c9beMf86He0wuasxhI62wyoALpUR2cBlKLMZ46T/a",
+      "history": []
     }
   ]
 }

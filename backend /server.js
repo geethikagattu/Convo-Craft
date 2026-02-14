@@ -43,9 +43,6 @@ app.get("/", (req, res) => {
 /* =========================
    Signup
 ========================= */
-/* =========================
-   Signup
-========================= */
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -55,10 +52,10 @@ app.post("/signup", async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ error: "All fields required" });
 
-    await db.read();
-    console.log('📖 Read DB, current users:', db.data.users.length);
+    const data = db.read();
+    console.log('📖 Read DB, current users:', data.users.length);
 
-    const existingUser = db.data.users.find(u => u.email === email);
+    const existingUser = data.users.find(u => u.email === email);
     
     if (existingUser) {
       console.log('❌ User already exists');
@@ -77,17 +74,13 @@ app.post("/signup", async (req, res) => {
 
     console.log('👤 Creating user:', user.id);
 
-    db.data.users.push(user);
+    data.users.push(user);
     
-    console.log('💾 Before write, users count:', db.data.users.length);
+    console.log('💾 Before write, users count:', data.users.length);
     
-    await db.write();
+    db.write(data);
     
-    console.log('✅ After write, checking file...');
-    
-    // Verify it was written
-    await db.read();
-    console.log('📊 Verified users in DB:', db.data.users.length);
+    console.log('✅ User created successfully');
 
     res.json({ message: "User created successfully" });
 
@@ -96,6 +89,7 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ error: "Signup failed" });
   }
 });
+
 /* =========================
    Login
 ========================= */
@@ -103,8 +97,8 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    await db.read();
-    const user = db.data.users.find(u => u.email === email);
+    const data = db.read();
+    const user = data.users.find(u => u.email === email);
     
     if (!user)
       return res.status(400).json({ error: "User not found" });
@@ -124,6 +118,104 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+/* =========================
+   Check Auth / Auto Login
+========================= */
+app.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const data = db.read();
+    const user = data.users.find(u => u.id === req.user.id);
+    
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email
+    });
+
+  } catch (err) {
+    console.error("Auth Check Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* =========================
+   Forgot Password
+========================= */
+app.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email)
+      return res.status(400).json({ error: "Email required" });
+
+    const data = db.read();
+    const user = data.users.find(u => u.email === email);
+
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetExpiry = Date.now() + 10 * 60 * 1000;
+
+    user.resetCode = resetCode;
+    user.resetExpiry = resetExpiry;
+    db.write(data);
+
+    console.log(`🔑 Reset code for ${email}: ${resetCode}`);
+
+    res.json({ 
+      message: "Reset code generated",
+      resetCode: resetCode,
+      note: "In production, this would be sent via email"
+    });
+
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* =========================
+   Reset Password
+========================= */
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+
+    if (!email || !resetCode || !newPassword)
+      return res.status(400).json({ error: "All fields required" });
+
+    const data = db.read();
+    const user = data.users.find(u => u.email === email);
+
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    if (user.resetCode !== resetCode)
+      return res.status(400).json({ error: "Invalid reset code" });
+
+    if (Date.now() > user.resetExpiry)
+      return res.status(400).json({ error: "Reset code expired" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    
+    delete user.resetCode;
+    delete user.resetExpiry;
+    
+    db.write(data);
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -274,15 +366,15 @@ Keep it short (2-4 sentences max).
     const output = data.candidates[0].content.parts[0].text;
 
     // Save to history
-    await db.read();
-    const user = db.data.users.find(u => u.id === req.user.id);
+    const dbData = db.read();
+    const user = dbData.users.find(u => u.id === req.user.id);
     if (user) {
       user.history.push({
         userMessage: message,
         aiReply: output,
         date: new Date().toISOString()
       });
-      await db.write();
+      db.write(dbData);
     }
 
     res.json({ reply: output });
@@ -298,33 +390,11 @@ Keep it short (2-4 sentences max).
 ========================= */
 app.get("/history", authMiddleware, async (req, res) => {
   try {
-    await db.read();
-    const user = db.data.users.find(u => u.id === req.user.id);
+    const data = db.read();
+    const user = data.users.find(u => u.id === req.user.id);
     res.json(user?.history || []);
   } catch {
     res.status(500).json({ error: "Could not fetch history" });
-  }
-});
-/* =========================
-   Check Auth / Auto Login
-========================= */
-app.get("/me", authMiddleware, async (req, res) => {
-  try {
-    await db.read();
-    const user = db.data.users.find(u => u.id === req.user.id);
-    
-    if (!user)
-      return res.status(404).json({ error: "User not found" });
-
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email
-    });
-
-  } catch (err) {
-    console.error("Auth Check Error:", err);
-    res.status(500).json({ error: "Server error" });
   }
 });
 
