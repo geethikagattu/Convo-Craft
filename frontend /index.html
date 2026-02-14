@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConvoCraft – AI Conversation Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Apply saved theme immediately to reduce flash (class on body) -->
+  <script>
+    (function () {
+      if (localStorage.getItem('convocraft-theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+    })();
+  </script>
+  <!-- Sticky Navbar -->
+  <header class="navbar" id="navbar">
+    <div class="navbar-inner">
+      <a href="#" class="logo">
+        <span class="logo-text">ConvoCraft</span>
+        <span class="logo-tagline">Speak Better. Connect Deeper.</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#about" class="nav-link">About</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+      </nav>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Toggle light/dark mode">
+        <span class="theme-toggle-icon icon-sun" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </span>
+        <span class="theme-toggle-icon icon-moon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">Start Conversations Without Overthinking</h1>
+        <p class="hero-subtitle">AI-powered conversation starters and smart follow-ups.</p>
+        <a href="#generator" class="btn btn-primary hero-cta">Try Now</a>
+      </div>
+    </section>
+
+    <!-- About Section (for smooth scroll target) -->
+    <section class="section section-about" id="about">
+      <div class="glass-card card-about">
+        <h2>About ConvoCraft</h2>
+        <p>ConvoCraft helps you break the ice and keep conversations flowing. Whether you're at college, the office, or a networking event, we give you tailored starters and follow-ups so you can connect with confidence.</p>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section" id="how-it-works">
+      <div class="glass-card card-how">
+        <h2>How It Works</h2>
+        <ol class="how-steps">
+          <li>Choose your situation and style.</li>
+          <li>Generate icebreakers or get reply suggestions.</li>
+          <li>Practice in our chat and see your scores.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Icebreaker Generator -->
+    <section class="section section-generator" id="generator">
+      <div class="glass-card card-generator">
+        <h2>Icebreaker Generator</h2>
+        <div class="form-row">
+          <label for="situation">Select Situation</label>
+          <select id="situation" class="select-input">
+            <option value="college">College</option>
+            <option value="office">Office</option>
+            <option value="dating">Dating</option>
+            <option value="reconnecting">Reconnecting With Friend</option>
+            <option value="traveling-solo">Traveling Solo</option>
+            <option value="new-neighbor">New Neighbor</option>
+            <option value="hostel-pg">Hostel / PG</option>
+            <option value="gym">Gym</option>
+            <option value="gaming">Gaming</option>
+            <option value="networking">Networking Event</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="style">Your Style</label>
+          <select id="style" class="select-input">
+            <option value="introvert">Introvert</option>
+            <option value="extrovert">Extrovert</option>
+            <option value="ambivert">Ambivert</option>
+            <option value="calm">Calm</option>
+            <option value="funny">Funny</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="generate-icebreaker">Generate Icebreaker</button>
+        <div class="loading-icebreaker" id="loading-icebreaker" aria-hidden="true">
+          <div class="spinner"></div>
+          <span>Generating...</span>
+        </div>
+        <div class="icebreaker-results" id="icebreaker-results" aria-hidden="true">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Continue the Conversation -->
+    <section class="section" id="continue">
+      <div class="glass-card card-continue">
+        <h2>Continue the Conversation</h2>
+        <label for="their-reply">Paste their reply here</label>
+        <textarea id="their-reply" class="textarea-input" rows="4" placeholder="e.g. Yeah, I'm studying computer science. What about you?"></textarea>
+        <button type="button" class="btn btn-primary" id="suggest-replies">Suggest Replies</button>
+        <div class="loading-replies" id="loading-replies" aria-hidden="true">
+          <div class="spinner"></div>
+          <span>Thinking of replies...</span>
+        </div>
+        <div class="reply-results" id="reply-results" aria-hidden="true">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Practice Mode -->
+    <section class="section" id="practice">
+      <div class="glass-card card-practice">
+        <h2>Practice Mode</h2>
+        <p class="practice-hint">Send a few messages to practice. After 3 messages, you'll see your conversation scores.</p>
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-bubble chat-bubble-ai">
+              <p>Hi! I'm here to help you practice. Say something—try "hi" or mention how you're feeling.</p>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." maxlength="500" autocomplete="off">
+            <button type="button" class="btn btn-primary btn-send" id="chat-send">Send</button>
+          </div>
+        </div>
+        <div class="scoring-panel" id="scoring-panel" aria-hidden="true">
+          <h3>Your Conversation Scores</h3>
+          <div class="score-item">
+            <span class="score-label">Confidence Score</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="score-confidence" style="width: 0%"></div>
+            </div>
+            <span class="score-value" id="score-confidence-value">0%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Empathy Score</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="score-empathy" style="width: 0%"></div>
+            </div>
+            <span class="score-value" id="score-empathy-value">0%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Curiosity Score</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="score-curiosity" style="width: 0%"></div>
+            </div>
+            <span class="score-value" id="score-curiosity-value">0%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="footer-text">Built for Code for Connection Hackathon</p>
+    <div class="footer-social">
+      <a href="#" class="social-icon" aria-label="Twitter">𝕏</a>
+      <a href="#" class="social-icon" aria-label="LinkedIn">in</a>
+      <a href="#" class="social-icon" aria-label="GitHub">⌘</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
