@@ -10,9 +10,6 @@ dotenv.config();
 
 const app = express();
 
-/* =========================
-   Middleware
-========================= */
 app.use(cors());
 app.use(express.json());
 
@@ -24,23 +21,16 @@ console.log("✅ Database ready!");
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  if (!authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Invalid token format." });
-  }
+  if (!authHeader)
+    return res.status(401).json({ error: "Access denied. No token." });
 
   try {
     const token = authHeader.split(" ")[1];
-
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = verified;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token." });
+  } catch {
+    res.status(400).json({ error: "Invalid token" });
   }
 };
 
@@ -143,124 +133,215 @@ app.get("/me", authMiddleware, (req, res) => {
 });
 
 /* =========================
-   Generate Icebreakers
+   Forgot Password
+========================= */
+app.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email)
+      return res.status(400).json({ error: "Email required" });
+
+    const data = db.read();
+    const user = data.users.find(u => u.email === email);
+
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetExpiry = Date.now() + 10 * 60 * 1000;
+
+    user.resetCode = resetCode;
+    user.resetExpiry = resetExpiry;
+    db.write(data);
+
+    console.log(`🔑 Reset code for ${email}: ${resetCode}`);
+
+    res.json({ 
+      message: "Reset code generated",
+      resetCode: resetCode,
+      note: "In production, this would be sent via email"
+    });
+
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* =========================
+   Reset Password
+========================= */
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+
+    if (!email || !resetCode || !newPassword)
+      return res.status(400).json({ error: "All fields required" });
+
+    const data = db.read();
+    const user = data.users.find(u => u.email === email);
+
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    if (user.resetCode !== resetCode)
+      return res.status(400).json({ error: "Invalid reset code" });
+
+    if (Date.now() > user.resetExpiry)
+      return res.status(400).json({ error: "Reset code expired" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    
+    delete user.resetCode;
+    delete user.resetExpiry;
+    
+    db.write(data);
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* =========================
+   Generate Icebreakers - NO AUTH
 ========================= */
 app.post("/generate", async (req, res) => {
   try {
     const { context, personality } = req.body;
 
-    if (!context || !personality) {
-      return res.status(400).json({ error: "Missing fields." });
-    }
+    if (!context || !personality)
+      return res.status(400).json({ error: "Missing fields" });
 
-    const prompt = `
-Generate 3 natural conversation starters.
+    const prompt = `Generate 3 natural conversation starters for someone with a ${personality} personality in this context: ${context}.
 
-Context: ${context}
-Personality: ${personality}
+Return ONLY 3 icebreakers, one per line. No numbering, no explanations, just the conversation starters.`;
 
-Format exactly like:
-
-Icebreaker 1:
-Follow up:
-If awkward:
-
-Icebreaker 2:
-Follow up:
-If awkward:
-
-Icebreaker 3:
-Follow up:
-If awkward:
-
-No explanations.
-`;
-
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      },
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
     );
 
-    const data = await aiResponse.json();
+    const data = await response.json();
 
-    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-      console.error("Gemini Error:", data);
-      return res.status(500).json({ error: "AI generation failed." });
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('❌ Gemini API Error:', data);
+      return res.status(500).json({ error: "Failed to generate icebreakers", details: data });
     }
 
     const output = data.candidates[0].content.parts[0].text;
+    console.log('✅ Generated icebreakers successfully');
 
     res.json({ output });
-  } catch (err) {
-    console.error("Generate Error:", err);
-    res.status(500).json({ error: "Server error." });
+
+  } catch (error) {
+    console.error("❌ Generate Error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
 /* =========================
-   Practice Chat
+   Suggest Replies - NO AUTH
 ========================= */
-app.post("/practice-chat", authMiddleware, async (req, res) => {
+app.post("/suggest-replies", async (req, res) => { 
   try {
     const { message } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: "Message is required." });
-    }
+    if (!message)
+      return res.status(400).json({ error: "Message is required" });
 
-    const prompt = `
-You are a friendly AI helping someone practice conversation skills.
+    const prompt = `Someone said: "${message}"
 
-User said:
-"${message}"
+Generate exactly 5 reply options in this format:
+1. A natural follow-up question
+2. Another natural follow-up  
+3. A third follow-up
+4. An empathetic response
+5. A light humorous response
 
-Respond naturally.
-Keep it short (2-4 sentences max).
-`;
+Return ONLY the 5 replies, one per line, numbered 1-5.`;
 
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      },
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
     );
 
-    const data = await aiResponse.json();
-
-    if (!data.candidates) {
-      return res.status(500).json({ error: "AI generation failed." });
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('❌ Gemini API Error:', data);
+      return res.status(500).json({ error: "Failed to generate replies", details: data });
     }
 
-    const reply = data.candidates[0].content.parts[0].text;
+    const output = data.candidates[0].content.parts[0].text;
+    console.log('✅ Generated replies successfully');
 
-    // Save chat history
-    const dbData = db.read();
-    const user = dbData.users.find((u) => u.id === req.user.id);
+    res.json({ output });
 
-    if (user) {
-      user.history.push({
-        userMessage: message,
-        aiReply: reply,
-        date: new Date().toISOString(),
-      });
+  } catch (error) {
+    console.error("❌ Reply Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-      db.write(dbData);
+/* =========================
+   Practice Chat - NO AUTH
+========================= */
+app.post("/practice-chat", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message)
+      return res.status(400).json({ error: "Message is required" });
+
+    const prompt = `You are a friendly conversation coach helping someone practice their social skills.
+
+They said: "${message}"
+
+Respond naturally and encouragingly in 2-3 sentences. Be warm, supportive, and help guide the conversation.`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('❌ Gemini API Error:', data);
+      return res.status(500).json({ error: "Failed to generate response", details: data });
     }
 
-    res.json({ reply });
-  } catch (err) {
-    console.error("Practice Chat Error:", err);
-    res.status(500).json({ error: "Server error." });
+    const output = data.candidates[0].content.parts[0].text;
+    console.log('✅ Generated chat response successfully');
+
+    res.json({ reply: output });
+
+  } catch (error) {
+    console.error("❌ Practice Chat Error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

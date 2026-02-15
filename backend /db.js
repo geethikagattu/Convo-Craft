@@ -8,23 +8,38 @@ const file = join(__dirname, 'db.json');
 
 const adapter = new JSONFile(file);
 const defaultData = { users: [] };
-const db = new Low(adapter, defaultData);
+const dbInstance = new Low(adapter, defaultData);
 
 // Initialize database
-await db.read();
+await dbInstance.read();
 
 // Ensure data structure exists
-if (!db.data) {
-  db.data = defaultData;
+if (!dbInstance.data) {
+  dbInstance.data = defaultData;
 }
 
-if (!db.data.users) {
-  db.data.users = [];
+if (!dbInstance.data.users) {
+  dbInstance.data.users = [];
 }
 
-await db.write();
+await dbInstance.write();
 
 console.log('📁 Database file:', file);
-console.log('📊 Current users:', db.data.users.length);
+console.log('📊 Current users:', dbInstance.data.users.length);
+
+// Export wrapper functions that work with your server.js
+const db = {
+  read() {
+    // Return the data directly (synchronously access the already loaded data)
+    return dbInstance.data;
+  },
+  
+  write(data) {
+    // Update the data and write to file
+    dbInstance.data = data;
+    dbInstance.write();
+    return true;
+  }
+};
 
 export default db;
